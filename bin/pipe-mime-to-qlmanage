@@ -1,0 +1,65 @@
+#!/usr/bin/env node
+
+// pipe-mime-to-qlmanage
+//
+// Takes a single or multipart MIME message from stdin and opens it in qlmanage
+
+const { default: parse } = require("emailjs-mime-parser");
+const fs = require("fs");
+const { StringDecoder } = require("string_decoder");
+const tmp = require("tmp");
+const { exec, spawn } = require("child_process");
+const mimeTypes = require("mime-types");
+
+// Get raw message from stdin
+const raw = fs.readFileSync(0, 'utf-8');
+// Parse message
+const mime = parse(raw);
+const decoder = new StringDecoder('utf-8');
+
+// Will contain list of all generated temp files
+const files = [];
+
+// Test whether a file is html
+// Needed for our HTML file workaround (see below)
+const isHtml = f => {
+  const tokens = f.split('.');
+  const ext = tokens[tokens.length - 1];
+
+  if (ext === 'html') return true;
+  return false;
+};
+
+// Write a MIME node into a temporary file
+const writeTempFile = m => {
+  // Content is encoded as utf8 ints, let's decode it
+  const decoded = decoder.write(m.content)
+  // Create the temp file
+  const file = tmp.fileSync({ mode: 0400, postfix: `.${mimeTypes.extension(m.contentType.value)}` });
+
+  // Write MIME node into the temp file
+  fs.writeFileSync(file.fd, decoded);
+
+  files.push(file);
+};
+
+
+// If we have any content in the root node, display it
+if (mime.content) writeTempFile(mime);
+
+// Only display child nodes after the first one since the first child node
+// is simply the email body, which we can view in our text-based MUA
+if (mime.childNodes.length > 1) {
+  // Loop through MIME parts
+  mime.childNodes.slice(1).forEach(writeTempFile);
+}
+
+// Workaround for HTML files: open using browser because links don't work using qlmanage
+spawn('open', files.map(f => f.name).filter(isHtml), { stdio: 'ignore', detached: true }).unref();
+// For everything else, use qlmanage
+spawn('qlmanage', ['-p', ...files.map(f => f.name).filter(f => !isHtml(f))], { stdio: 'ignore', detached: true }).unref();
+
+// exec(`qlmanage -p ${files.map(f => f.name).join(' ')}`);
+
+// Cleanup
+// files.forEach(f => f.removeCallback());

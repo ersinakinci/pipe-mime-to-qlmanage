@@ -1,0 +1,11 @@
+{
+  "name": "pipe-mime-to-qlmanage",
+  "version": "0.0.1",
+  "files": [ "./bin/*" ],
+  "bin": "./bin/pipe-mime-to-qlmanage",
+  "dependencies": {
+    "emailjs-mime-parser": "^2.0.7",
+    "mime-types": "^2.1.26",
+    "tmp": "^0.1.0"
+  }
+}
