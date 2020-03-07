@@ -11,7 +11,7 @@ Not currently available via NPM! However, you can install roughly like so:
 1. Clone this repo: `git clone https://github.com/earksiinni/pipe-mime-to-qlmanage.git`
 2. Install dependencies (we assume that you have Node installed): `npm install`
 
-Or, if you use [Nix](https://nixos.org), simply run `nix -f default.nix -iA package` inside your cloned directory.
+Or, if you use [Nix](https://nixos.org), simply run `nix-env -f default.nix -iA package` inside your cloned directory.
 
 ## Example usage with alot
 
